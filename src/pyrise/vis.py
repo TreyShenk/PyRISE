@@ -7,6 +7,9 @@ import matplotlib.patches as mpatches
 from pyrise.pipeline import BoundingBox
 
 
+
+
+
 def plot_detections(
     tf_plot: np.ndarray,
     boxes: list[BoundingBox],
@@ -118,5 +121,49 @@ def plot_detections(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
+
+    return fig
+
+
+def plot_metrics_curve(
+    curve: dict,
+    *,
+    ax: plt.Axes | None = None,
+    title: str = "Detection Performance",
+) -> plt.Figure:
+    """Plot Pd, Pfa, and F1 as functions of IoU threshold.
+
+    Parameters
+    ----------
+    curve:
+        Dict returned by :func:`~pyrise.metrics.metrics_curve`, containing
+        ``"thresholds"``, ``"pd"``, ``"pfa"``, and ``"f1"`` arrays.
+    ax:
+        Existing ``Axes`` to draw on. If ``None``, a new figure and axes are
+        created and returned.
+    title:
+        Axes title.
+
+    Returns
+    -------
+    plt.Figure
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 4))
+    else:
+        fig = ax.get_figure()
+
+    thresholds = curve["thresholds"]
+    ax.plot(thresholds, curve["pd"],  color="steelblue",  linestyle="-",  label="Pd (detection rate)")
+    ax.plot(thresholds, curve["pfa"], color="darkorange",  linestyle="--", label="Pfa (false alarm rate)")
+    ax.plot(thresholds, curve["f1"],  color="seagreen",   linestyle=":",  label="F1")
+
+    ax.set_xlim(thresholds[0], thresholds[-1])
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlabel("IoU Threshold")
+    ax.set_ylabel("Probability")
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
     return fig
