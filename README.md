@@ -25,18 +25,34 @@ PyRISE runs four stages on a 2D time-frequency plot of shape `(T, F)`:
 
 ## Installation
 
-Requires Python ≥ 3.14 and [uv](https://docs.astral.sh/uv/).
+**Tested on Python 3.10, 3.11, 3.12, 3.13, and 3.14.**
+
+### From GitHub (recommended)
 
 ```bash
-git clone <repo-url>
-cd rise
-uv sync
+pip install git+https://github.com/TreyShenk/PyRISE.git
 ```
 
-To also enable the arPLS noise floor estimator:
+With the optional arPLS noise floor estimator:
 
 ```bash
-uv sync --extra arpls
+pip install "pyrise[arpls] @ git+https://github.com/TreyShenk/PyRISE.git"
+```
+
+Using [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add git+https://github.com/TreyShenk/PyRISE.git
+uv add "git+https://github.com/TreyShenk/PyRISE.git[arpls]"  # with arPLS
+```
+
+### From source
+
+```bash
+git clone git@github.com:TreyShenk/PyRISE.git
+cd PyRISE
+uv sync              # core deps
+uv sync --extra arpls  # with arPLS support
 ```
 
 ## Usage
