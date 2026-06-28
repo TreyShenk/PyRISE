@@ -107,6 +107,33 @@ fig = plot_detections(tf_plot, boxes, fs=100e6, fft_size=1024)
 plt.show()
 ```
 
+### Evaluate against ground truth
+
+If you have labeled data, pass ground-truth boxes to the metrics module:
+
+```python
+from pyrise import BoundingBox, detection_metrics, metrics_curve, plot_metrics_curve
+
+gt_boxes = [
+    BoundingBox(t0=40, t1=140, f0=50, f1=80),
+    BoundingBox(t0=80, t1=120, f0=130, f1=200),
+]
+
+# Metrics at a single IoU threshold
+result = detection_metrics(gt_boxes, detected_boxes, iou_threshold=0.5)
+print(f"Pd={result.pd:.2f}  Pfa={result.pfa:.2f}  mean IoU={result.mean_iou:.2f}  F1={result.f1:.2f}")
+
+# Metrics across a range of IoU thresholds (0.1 → 0.9)
+curve = metrics_curve(gt_boxes, detected_boxes)
+fig = plot_metrics_curve(curve)
+plt.show()
+```
+
+`detection_metrics` follows the paper's matching rule exactly: each ground-truth box
+independently checks whether *any* detection overlaps it above the threshold, and each
+detection independently checks whether *any* ground-truth box covers it. This is not
+optimal assignment — a single detection can validate multiple ground-truth boxes.
+
 ### Run the demo
 
 ```bash
@@ -143,6 +170,35 @@ f_center = (box.f0 + box.f1) / 2 * df
 ### `plot_detections(tf_plot, boxes, *, ax, db, vmin, vmax, cmap, box_color, fs, fft_size, title)`
 
 Plots the spectrogram with bounding boxes overlaid. Pass `fs` and `fft_size` for physical axis labels (MHz / ms). Returns the `matplotlib.Figure`.
+
+---
+
+### `detection_metrics(gt_boxes, pred_boxes, iou_threshold=0.5) -> EvalResult`
+
+Computes performance metrics at a single IoU threshold using the paper's matching rule.
+
+| Field | Description |
+|---|---|
+| `pd` | Probability of detection — `Nt / Ngt`. Fraction of GT signals covered by at least one detection above threshold. |
+| `pfa` | Probability of false alarm — `Nf / Nd`. Fraction of detections not covering any GT signal above threshold. |
+| `mean_iou` | Mean of `max_j IoU(gt_i, pred_j)` over all GT boxes. Misses contribute 0, so `mean_iou ≤ pd`. |
+| `f1` | Harmonic mean of precision (`1 − pfa`) and recall (`pd`). |
+| `n_gt`, `n_det` | Number of ground-truth and detected boxes. |
+| `iou_threshold` | The threshold value used. |
+
+### `metrics_curve(gt_boxes, pred_boxes, thresholds=None) -> dict`
+
+Sweeps `detection_metrics` over a range of IoU thresholds (default: `np.linspace(0.1, 0.9, 17)`).
+Returns a dict with keys `"thresholds"`, `"pd"`, `"pfa"`, `"mean_iou"`, `"f1"` — all 1-D arrays.
+The IoU matrix is computed once and reused across all thresholds.
+
+### `plot_metrics_curve(curve, *, ax, title) -> Figure`
+
+Plots Pd, Pfa, and F1 vs IoU threshold from a `metrics_curve` result. Returns the `matplotlib.Figure`.
+
+### `iou(a, b) -> float` / `iou_matrix(gt_boxes, pred_boxes) -> np.ndarray`
+
+Low-level building blocks. `iou_matrix` returns shape `(Ngt, Nd)` — the I matrix from the paper.
 
 ## Reference
 
